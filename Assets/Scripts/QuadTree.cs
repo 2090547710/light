@@ -5,7 +5,7 @@ using UnityEditor;
 public class QuadTree
 {
     ////////////////////////////////////////////////////////////////
-    //四叉树节点类
+    // 四叉树节点类
     private class QuadTreeNode
     {
         // 节点边界（中心点 + 尺寸）
@@ -21,6 +21,9 @@ public class QuadTree
         
         // 当前存储的对象列表
         public List<GameObject> Objects = new List<GameObject>();
+
+        // 简化为光照可见状态
+        public bool IsIlluminated = false;
 
         public QuadTreeNode(Vector2 center, Vector2 size, int capacity)
         {
@@ -68,10 +71,28 @@ public class QuadTree
     private QuadTreeNode root;
     private int maxDepth;
 
-    public QuadTree(Vector2 center, Vector2 size, int capacity, int maxDepth = 5)
+    public QuadTree(Vector2 center, Vector2 size, int capacity, int maxDepth = 5, bool preSplit = false)
     {
         root = new QuadTreeNode(center, size, capacity);
         this.maxDepth = maxDepth;
+        
+        // 新增预分裂功能
+        if(preSplit)
+        {
+            PreSplitRecursive(root, 0);
+        }
+    }
+
+    // 新增预分裂方法
+    private void PreSplitRecursive(QuadTreeNode node, int currentDepth)
+    {
+        if(currentDepth >= maxDepth) return;
+        
+        node.Split();
+        foreach(var child in node.Children)
+        {
+            PreSplitRecursive(child, currentDepth + 1);
+        }
     }
 
     // 插入对象到四叉树
@@ -201,21 +222,26 @@ public class QuadTree
         if (node == null) return;
 
         // 根据深度设置不同颜色
-        Color[] depthColors = { Color.red, Color.green, Color.blue, Color.yellow, Color.cyan };
-        Gizmos.color = depthColors[Mathf.Clamp(depth, 0, depthColors.Length - 1)];
+        // Color[] depthColors = { Color.red, Color.green, Color.blue, Color.yellow, Color.cyan };
+        // Gizmos.color = depthColors[Mathf.Clamp(depth, 0, depthColors.Length - 1)];
 
         // 绘制节点边界
         Vector3 center = new Vector3(node.Center.x, 0, node.Center.y);
         Vector3 size = new Vector3(node.Size.x, 0.1f, node.Size.y);
-        Gizmos.DrawWireCube(center, size);
+        // Gizmos.DrawWireCube(center, size);
 
         // 显示对象数量
-        GUIStyle style = new GUIStyle();
-        style.normal.textColor = Gizmos.color;
-        Handles.Label(
-            new Vector3(node.Center.x, 0,node.Center.y), 
-            $"{node.Objects.Count}",
-            style);
+        // GUIStyle style = new GUIStyle();
+        // style.normal.textColor = Gizmos.color;
+        // Handles.Label(
+        //     new Vector3(node.Center.x, 0,node.Center.y), 
+        //     $"{node.Objects.Count}",
+        //     style);
+
+        // 根据光照状态改变颜色
+         // 半透明填充（alpha值0.2）
+        Gizmos.color = node.IsIlluminated ? new Color(1, 0.9f, 0.5f, 1.0f) : new Color(0,0,0,0.1f);
+        Gizmos.DrawCube(center, size * 1.0f);
 
         // 递归绘制子节点
         if (node.Children != null)
@@ -226,5 +252,104 @@ public class QuadTree
             }
         }
     }
-   
-} 
+
+    // 新增移除方法
+    public bool Remove(GameObject obj)
+    {
+        Vector3 pos = obj.transform.position;
+        Vector2 position = new Vector2(pos.x, pos.z);
+        return RemoveRecursive(root, position, obj);
+    }
+
+    private bool RemoveRecursive(QuadTreeNode node, Vector2 position, GameObject obj)
+    {
+        if (!node.Contains(position)) return false;
+
+        // 尝试在当前节点移除
+        if (node.Objects.Remove(obj))
+        {
+            return true;
+        }
+
+        // 如果有子节点则递归查找
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                if (RemoveRecursive(child, position, obj))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // 新增光照标记方法
+    public void MarkIlluminatedArea(Vector2 center, float radius)
+    {
+        MarkIlluminatedRecursive(root, center, radius);
+    }
+
+    private void MarkIlluminatedRecursive(QuadTreeNode node, Vector2 center, float radius)
+    {
+        Rect nodeRect = new Rect(
+            node.Center.x - node.Size.x/2,
+            node.Center.y - node.Size.y/2,
+            node.Size.x,
+            node.Size.y);
+        
+        if (!CircleRectOverlap(center, radius, nodeRect)) return;
+
+        // 只在叶子节点进行标记
+        if (node.Children == null)
+        {
+            node.IsIlluminated = true;
+        }
+        else
+        {
+            // 非叶子节点继续向下传播
+            foreach (var child in node.Children)
+            {
+                MarkIlluminatedRecursive(child, center, radius);
+            }
+        }
+    }
+
+    // 圆形与矩形碰撞检测
+    private bool CircleRectOverlap(Vector2 circlePos, float radius, Rect rect)
+    {
+        float dx = Mathf.Abs(circlePos.x - rect.center.x);
+        float dy = Mathf.Abs(circlePos.y - rect.center.y);
+
+        if (dx > (rect.width/2 + radius)) return false;
+        if (dy > (rect.height/2 + radius)) return false;
+
+        if (dx <= (rect.width/2)) return true;
+        if (dy <= (rect.height/2)) return true;
+
+        float cornerDistSq = Mathf.Pow(dx - rect.width/2, 2) +
+                           Mathf.Pow(dy - rect.height/2, 2);
+
+        return cornerDistSq <= (radius * radius);
+    }
+
+    // 重置光照状态
+    public void ResetIllumination()
+    {
+        ResetIlluminationRecursive(root);
+    }
+
+    private void ResetIlluminationRecursive(QuadTreeNode node)
+    {
+        node.IsIlluminated = false;
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                ResetIlluminationRecursive(child);
+            }
+        }
+    }
+}
+
