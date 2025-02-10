@@ -54,9 +54,9 @@ public class Test : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Space)){
-            check();
-        }
+        // if(Input.GetKeyDown(KeyCode.Space)){
+        //     check();
+        // }
     }
 
 
@@ -98,11 +98,11 @@ public class Test : MonoBehaviour
     void OnDrawGizmos()
     {        
         
-        if (queryBounds != null)
-        {
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawWireCube(queryBounds.center, queryBounds.size);
-        }
+        // if (queryBounds != null)
+        // {
+        //     Gizmos.color = Color.magenta;
+        //     Gizmos.DrawWireCube(queryBounds.center, queryBounds.size);
+        // }
   
     }
 }

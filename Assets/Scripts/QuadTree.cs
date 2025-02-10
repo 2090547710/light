@@ -6,10 +6,9 @@ public class QuadTree
 {
     ////////////////////////////////////////////////////////////////
     // 四叉树节点类
-    private class QuadTreeNode
+    public class QuadTreeNode
     {
         // 节点边界（中心点 + 尺寸）
-
         public Vector2 Center { get; private set; }
         public Vector2 Size { get; private set; }
         
@@ -62,6 +61,23 @@ public class QuadTree
         {
             return Mathf.Abs(point.x - Center.x) <= Size.x * 0.5f &&
                    Mathf.Abs(point.y - Center.y) <= Size.y * 0.5f;
+        }
+
+        //设置图层
+        public void SetLayers(bool isIlluminated)
+        {
+            // 优化后的图层设置逻辑
+            int targetLayer = isIlluminated ? 
+                LayerMask.NameToLayer("Light") : 
+                LayerMask.NameToLayer("Dark");
+            
+            foreach (var obj in Objects)
+            {
+                if(obj != null) // 添加空对象检查
+                {
+                    obj.layer = targetLayer;
+                }
+            }
         }
     }
 
@@ -241,7 +257,7 @@ public class QuadTree
         // 根据光照状态改变颜色
          // 半透明填充（alpha值0.2）
         Gizmos.color = node.IsIlluminated ? new Color(1, 0.9f, 0.5f, 1.0f) : new Color(0,0,0,0.1f);
-        Gizmos.DrawCube(center, size * 1.0f);
+        Gizmos.DrawWireCube(center, size * 1.0f);
 
         // 递归绘制子节点
         if (node.Children != null)
@@ -350,6 +366,82 @@ public class QuadTree
                 ResetIlluminationRecursive(child);
             }
         }
+    }
+
+    // 新增批量设置图层的方法
+    public void UpdateAllLayers()
+    {
+        UpdateNodeLayers(root);
+    }
+
+    private void UpdateNodeLayers(QuadTreeNode node)
+    {
+        if(node == null) return;
+
+        // 只在叶子节点设置图层
+        if(node.Children == null)
+        {
+            node.SetLayers(node.IsIlluminated);
+        }
+        else
+        {
+            foreach(var child in node.Children)
+            {
+                UpdateNodeLayers(child);
+            }
+        }
+    }
+
+    // 新增方法：获取所有被光照的叶子节点
+    public List<QuadTreeNode> GetIlluminatedLeafNodes()
+    {
+        List<QuadTreeNode> result = new List<QuadTreeNode>();
+        GetLeafNodesRecursive(root, result);
+        return result;
+    }
+
+    private void GetLeafNodesRecursive(QuadTreeNode node, List<QuadTreeNode> result)
+    {
+        if (node.Children == null)
+        {
+            if (node.IsIlluminated)
+            {
+                result.Add(node);
+            }
+        }
+        else
+        {
+            foreach (var child in node.Children)
+            {
+                GetLeafNodesRecursive(child, result);
+            }
+        }
+    }
+
+    // 检查指定位置是否被照亮
+    public bool IsPositionIlluminated(Vector3 worldPos)
+    {
+        Vector2 pos = new Vector2(worldPos.x, worldPos.z);
+        return CheckIlluminationRecursive(root, pos);
+    }
+
+    private bool CheckIlluminationRecursive(QuadTreeNode node, Vector2 pos)
+    {
+        if (!node.Contains(pos)) return false;
+        
+        if (node.Children == null)
+        {
+            return node.IsIlluminated;
+        }
+
+        foreach (var child in node.Children)
+        {
+            if (CheckIlluminationRecursive(child, pos))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
