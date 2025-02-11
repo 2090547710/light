@@ -229,7 +229,7 @@ GameObject:
   - component: {fileID: 877133414}
   - component: {fileID: 877133416}
   m_Layer: 0
-  m_Name: Test
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -410,6 +410,7 @@ GameObject:
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
   - component: {fileID: 963194229}
+  - component: {fileID: 963194230}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -510,6 +511,28 @@ MonoBehaviour:
   maxZoom: 50
   smoothTime: 0.1
   initialZoom: 30
+--- !u!114 &963194230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02d4a36858422924da4885dd21a5fe22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  darkenIntensity: 0.5
+  targetLayers:
+    m_Bits: 0
+  replacementShader: {fileID: 0}
+  targetCamera: {fileID: 0}
+  originalColor:
+    r: 0
+    g: 0
+    b: 0
+    a: 0
 --- !u!1 &966081256
 GameObject:
   m_ObjectHideFlags: 0

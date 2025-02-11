@@ -5,7 +5,7 @@ using UnityEngine;
 // 新增光照系统管理器
 public class LightingManager : MonoBehaviour
 {
-    [SerializeField] private Material terrainMaterial; // 需要关联地形材质
+    [SerializeField] private List<Material> terrainMaterials = new List<Material>(); // 需要关联的地形材质列表
     private static readonly int LightCount = Shader.PropertyToID("_LightCount");
     private static readonly int LightPositions = Shader.PropertyToID("_LightPositions");
     private static readonly int LightRadii = Shader.PropertyToID("_LightRadii");
@@ -34,13 +34,15 @@ public class LightingManager : MonoBehaviour
             activeLights[i].ApplyLighting();
         }
 
-        // 传递数据到Shader
-        terrainMaterial.SetInt(LightCount, lightCount);
-        terrainMaterial.SetVectorArray(LightPositions, lightPositions);
-        terrainMaterial.SetFloatArray(LightRadii, lightRadii);
+        // 为所有材质设置参数
+        foreach (var material in terrainMaterials)
+        {
+            material.SetInt(LightCount, lightCount);
+            material.SetVectorArray(LightPositions, lightPositions);
+            material.SetFloatArray(LightRadii, lightRadii);
+        }
         
         tree.UpdateAllLayers();
-
     }
 
 
