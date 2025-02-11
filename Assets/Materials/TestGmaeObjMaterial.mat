@@ -63,6 +63,9 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
+    - _DarkFalloff: 0.2
+    - _DarkRecoveryRange: 1.64
+    - _DarknessFactor: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1

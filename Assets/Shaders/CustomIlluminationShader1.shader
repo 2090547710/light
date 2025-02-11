@@ -1,4 +1,4 @@
-Shader "Custom/CustomIlluminationShader"
+Shader "Custom/ObjectIlluminationShader"
 {
     Properties
     {
@@ -9,8 +9,6 @@ Shader "Custom/CustomIlluminationShader"
         _MinBrightness ("Minimum Brightness", Range(0,1)) = 0.2
         _MaxBrightness ("Maximum Brightness", Range(0,2)) = 1.0
         _LightFalloff ("Light Falloff", Range(0.1,1)) = 0.8
-        _DarknessFactor ("Darkness Factor", Range(0,1)) = 0.0
-        
     }
     SubShader
     {
@@ -43,8 +41,6 @@ Shader "Custom/CustomIlluminationShader"
         half _MinBrightness;
         half _MaxBrightness;
         half _LightFalloff;
-        half _DarknessFactor;
-        
 
         // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
         // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
@@ -57,24 +53,9 @@ Shader "Custom/CustomIlluminationShader"
         float IsIlluminated(float3 worldPos)
         {
             float illumination = 0.0;
-            bool isInDark = false; // 新增黑暗区域标记
             
             for (int i = 0; i < _LightCount; i++)
             {
-                // 处理负半径（正方形黑暗区域）
-                if (_LightRadii[i] < 0) 
-                {
-                    float halfSize = abs(_LightRadii[i]);
-                    float2 lightXZ = _LightPositions[i].xz;
-                    
-                    if (abs(worldPos.x - lightXZ.x) <= halfSize && 
-                        abs(worldPos.z - lightXZ.y) <= halfSize) 
-                    {
-                        isInDark = true; // 标记在黑暗区域
-                    }
-                    continue;
-                }
-
                 float3 lightPos = _LightPositions[i].xyz;
                 // 计算XZ平面距离（适合俯视角2D光照）
                 float distanceToLight = length(worldPos.xz - lightPos.xz);
@@ -83,12 +64,7 @@ Shader "Custom/CustomIlluminationShader"
                 illumination = max(illumination, falloff * _MaxBrightness);
             }
             
-            // 最终亮度处理：如果在黑暗区域则衰减亮度
-            if(isInDark) {
-                illumination *= _DarknessFactor; // 使用0-1的系数控制黑暗区域亮度
-            }
-            
-            return saturate(illumination);
+            return saturate(illumination); // 确保返回值在0-1之间
         }
 
         void surf (Input IN, inout SurfaceOutputStandard o)

@@ -5,6 +5,9 @@ using UnityEngine;
 // 新增光照系统管理器
 public class LightingManager : MonoBehaviour
 {
+    [Header("光照设置")]
+    public float randomRadiusVariance = 1f; // 可以通过Inspector调整误差范围
+
     [SerializeField] private List<Material> terrainMaterials = new List<Material>(); // 需要关联的地形材质列表
     private static readonly int LightCount = Shader.PropertyToID("_LightCount");
     private static readonly int LightPositions = Shader.PropertyToID("_LightPositions");
@@ -16,7 +19,6 @@ public class LightingManager : MonoBehaviour
     // 新增临时数组存储光照数据
     private Vector4[] lightPositions = new Vector4[30];
     private float[] lightRadii = new float[30];
-    public float LightRadiusdef = 0.5f;
     
     void LateUpdate()
     {
@@ -28,7 +30,9 @@ public class LightingManager : MonoBehaviour
         {
             Vector3 pos = activeLights[i].transform.position;
             lightPositions[i] = new Vector4(pos.x, 0, pos.z, 1);
-            lightRadii[i] = activeLights[i].Radius+LightRadiusdef;
+            lightRadii[i] = activeLights[i].Radius > 0 ? 
+                activeLights[i].Radius + randomRadiusVariance : 
+                activeLights[i].Radius;
             
             // 保持原有的四叉树光照逻辑
             activeLights[i].ApplyLighting();
@@ -41,8 +45,7 @@ public class LightingManager : MonoBehaviour
             material.SetVectorArray(LightPositions, lightPositions);
             material.SetFloatArray(LightRadii, lightRadii);
         }
-        
-        tree.UpdateAllLayers();
+      
     }
 
 

@@ -24,6 +24,9 @@ public class QuadTree
         // 简化为光照可见状态
         public bool IsIlluminated = false;
 
+        // 新增障碍标志（默认true）
+        public bool IsObstacle = true;
+
         public QuadTreeNode(Vector2 center, Vector2 size, int capacity)
         {
             Center = center;
@@ -62,23 +65,7 @@ public class QuadTree
             return Mathf.Abs(point.x - Center.x) <= Size.x * 0.5f &&
                    Mathf.Abs(point.y - Center.y) <= Size.y * 0.5f;
         }
-
-        //设置图层
-        public void SetLayers(bool isIlluminated)
-        {
-            // 优化后的图层设置逻辑
-            int targetLayer = isIlluminated ? 
-                LayerMask.NameToLayer("Light") : 
-                LayerMask.NameToLayer("Dark");
-            
-            foreach (var obj in Objects)
-            {
-                if(obj != null) // 添加空对象检查
-                {
-                    obj.layer = targetLayer;
-                }
-            }
-        }
+       
     }
 
     ////////////////////////////////////////////////////////////////
@@ -301,13 +288,15 @@ public class QuadTree
         return false;
     }
 
-    // 新增光照标记方法
+    // 修改后的光照标记方法
     public void MarkIlluminatedArea(Vector2 center, float radius)
     {
-        MarkIlluminatedRecursive(root, center, radius);
+        bool isSubtractive = radius < 0;
+        bool isSquare = isSubtractive; // 负半径时使用正方形检测
+        MarkIlluminatedRecursive(root, center, Mathf.Abs(radius), isSubtractive, isSquare);
     }
 
-    private void MarkIlluminatedRecursive(QuadTreeNode node, Vector2 center, float radius)
+    private void MarkIlluminatedRecursive(QuadTreeNode node, Vector2 center, float size, bool isSubtractive, bool isSquare)
     {
         Rect nodeRect = new Rect(
             node.Center.x - node.Size.x/2,
@@ -315,19 +304,27 @@ public class QuadTree
             node.Size.x,
             node.Size.y);
         
-        if (!CircleRectOverlap(center, radius, nodeRect)) return;
+        // 根据检测类型选择碰撞判断方法
+        bool overlap = isSquare ? 
+            SquareRectOverlap(center, size, nodeRect) : 
+            CircleRectOverlap(center, size, nodeRect);
+        
+        if (!overlap) return;
 
         // 只在叶子节点进行标记
         if (node.Children == null)
         {
-            node.IsIlluminated = true;
+            // 根据是否是减操作设置光照状态
+            node.IsIlluminated = isSubtractive ? false : true;
+            // 同步更新障碍状态
+            node.IsObstacle = false;
         }
         else
         {
             // 非叶子节点继续向下传播
             foreach (var child in node.Children)
             {
-                MarkIlluminatedRecursive(child, center, radius);
+                MarkIlluminatedRecursive(child, center, size, isSubtractive, isSquare);
             }
         }
     }
@@ -350,6 +347,21 @@ public class QuadTree
         return cornerDistSq <= (radius * radius);
     }
 
+    // 新增正方形与矩形碰撞检测
+    private bool SquareRectOverlap(Vector2 squareCenter, float squareSize, Rect rect)
+    {
+        // 计算正方形边界（边长为两倍squareSize）
+        float halfSize = squareSize; // 因为总边长是2*squareSize，半长就是squareSize
+        Rect squareRect = new Rect(
+            squareCenter.x - halfSize,
+            squareCenter.y - halfSize,
+            squareSize * 2,  // 实际边长为两倍传入值
+            squareSize * 2);
+        
+        // 矩形相交检测
+        return rect.Overlaps(squareRect);
+    }
+
     // 重置光照状态
     public void ResetIllumination()
     {
@@ -359,6 +371,7 @@ public class QuadTree
     private void ResetIlluminationRecursive(QuadTreeNode node)
     {
         node.IsIlluminated = false;
+        node.IsObstacle = true; // 重置障碍状态
         if (node.Children != null)
         {
             foreach (var child in node.Children)
@@ -368,29 +381,7 @@ public class QuadTree
         }
     }
 
-    // 新增批量设置图层的方法
-    public void UpdateAllLayers()
-    {
-        UpdateNodeLayers(root);
-    }
-
-    private void UpdateNodeLayers(QuadTreeNode node)
-    {
-        if(node == null) return;
-
-        // 只在叶子节点设置图层
-        if(node.Children == null)
-        {
-            node.SetLayers(node.IsIlluminated);
-        }
-        else
-        {
-            foreach(var child in node.Children)
-            {
-                UpdateNodeLayers(child);
-            }
-        }
-    }
+    
 
     // 新增方法：获取所有被光照的叶子节点
     public List<QuadTreeNode> GetIlluminatedLeafNodes()

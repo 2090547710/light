@@ -291,8 +291,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ba212a27d0762f49b1eb17e0a00288a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainMaterial: {fileID: 2100000, guid: 7ea123b665d442f47854b520494278a3, type: 2}
-  LightRadiusdef: 1
+  randomRadiusVariance: 1
+  terrainMaterials:
+  - {fileID: 2100000, guid: 7ea123b665d442f47854b520494278a3, type: 2}
+  - {fileID: 2100000, guid: 6fdbbda1d9dccca4eae22225f2daae1d, type: 2}
 --- !u!1 &890591707
 GameObject:
   m_ObjectHideFlags: 0
@@ -410,7 +412,6 @@ GameObject:
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
   - component: {fileID: 963194229}
-  - component: {fileID: 963194230}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -465,7 +466,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 183
+    m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -511,28 +512,6 @@ MonoBehaviour:
   maxZoom: 50
   smoothTime: 0.1
   initialZoom: 30
---- !u!114 &963194230
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 02d4a36858422924da4885dd21a5fe22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  darkenIntensity: 0.5
-  targetLayers:
-    m_Bits: 0
-  replacementShader: {fileID: 0}
-  targetCamera: {fileID: 0}
-  originalColor:
-    r: 0
-    g: 0
-    b: 0
-    a: 0
 --- !u!1 &966081256
 GameObject:
   m_ObjectHideFlags: 0
@@ -1191,7 +1170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 801302af557be1048a2eb17174804a56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Radius: 5.2
+  Radius: 7.8
 --- !u!1 &1639095882
 GameObject:
   m_ObjectHideFlags: 0

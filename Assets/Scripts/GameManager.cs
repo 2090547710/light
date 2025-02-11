@@ -8,9 +8,11 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
     public QuadTree tree;  // 提前声明
     public int maxDepth=5;
-    public int capacity=4;
+    public int capacity=1;
+    public bool preSplit=true;
     public Vector2 size=new Vector2(100,100);  
     public Vector2 center=Vector2.zero;
+    public GameObject prefab; 
     
     void Awake()
     {
@@ -21,7 +23,7 @@ public class GameManager : MonoBehaviour
             size: size,
             capacity: capacity,
             maxDepth: maxDepth,
-            preSplit: true  // 启用预分裂
+            preSplit: preSplit  // 启用预分裂
         );
 
         // 将四叉树实例赋给光照系统
@@ -35,12 +37,23 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // 生成100个实例
+        objects = new GameObject[100];
+        for (int i = 0; i < objects.Length; i++)
+        {
+            Vector3 position = new Vector3(
+                Random.Range(-50f, 50f),
+                1f,
+                Random.Range(-50f, 50f)
+            );
+            objects[i] = Instantiate(prefab, position, Quaternion.identity, transform);
+        }
+
         // 重置光照状态
         tree.ResetIllumination();
 
         // 插入对象
         foreach (var obj in objects)
-
         {
             tree.Insert(obj);
         }
